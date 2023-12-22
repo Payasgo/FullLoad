@@ -331,6 +331,35 @@
 							"referenceName": "LS_storedlinkedService",
 							"type": "LinkedServiceReference"
 						}
+					},
+					{
+						"name": "email_Success",
+						"type": "WebActivity",
+						"dependsOn": [
+							{
+								"activity": "Stored procedure1",
+								"dependencyConditions": [
+									"Succeeded"
+								]
+							}
+						],
+						"policy": {
+							"timeout": "0.12:00:00",
+							"retry": 0,
+							"retryIntervalInSeconds": 30,
+							"secureOutput": false,
+							"secureInput": false
+						},
+						"userProperties": [],
+						"typeProperties": {
+							"url": "https://testadfman.azurewebsites.net:443/api/emailsucess/triggers/When_a_HTTP_request_is_received/invoke?api-version=2022-05-01&sp=%2Ftriggers%2FWhen_a_HTTP_request_is_received%2Frun&sv=1.0&sig=OwauAh7nq6unZn9jKTz3--xueX494gNfNiSZ-0qpe3Q",
+							"method": "POST",
+							"headers": {},
+							"body": {
+								"value": "{\n    \"message\" : \"This is a custom dynamic message from your \n     pipeline with run ID @{pipeline().RunId}.\",\n    \"dataFactoryName\" : \"@{pipeline().DataFactory}\", \n    \"pipelineName\" : \"@{pipeline().Pipeline}\", \n    \n}",
+								"type": "Expression"
+							}
+						}
 					}
 				],
 				"policy": {
