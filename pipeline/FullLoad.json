@@ -58,6 +58,56 @@
 						}
 					}
 				]
+			},
+			{
+				"name": "Lookup",
+				"type": "Lookup",
+				"dependsOn": [
+					{
+						"activity": "Copy data",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"policy": {
+					"timeout": "0.12:00:00",
+					"retry": 0,
+					"retryIntervalInSeconds": 30,
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"source": {
+						"type": "SqlServerSource",
+						"queryTimeout": "02:00:00",
+						"partitionOption": "None"
+					},
+					"dataset": {
+						"referenceName": "DS_AUDITlog_SqlServerTable",
+						"type": "DatasetReference",
+						"parameters": {
+							"PipelineName": {
+								"value": "@pipeline().Pipeline",
+								"type": "Expression"
+							},
+							"pipelinerunid": {
+								"value": "@pipeline().RunId",
+								"type": "Expression"
+							},
+							"pipelinestatus": "SUCCESS",
+							"RunStart": {
+								"value": "@utcNow()",
+								"type": "Expression"
+							},
+							"Duration": {
+								"value": "@activity('Copy data').output.copyDuration",
+								"type": "Expression"
+							}
+						}
+					}
+				}
 			}
 		],
 		"variables": {

@@ -5,6 +5,23 @@
 			"referenceName": "LS_SqlServer",
 			"type": "LinkedServiceReference"
 		},
+		"parameters": {
+			"PipelineName": {
+				"type": "string"
+			},
+			"pipelinerunid": {
+				"type": "string"
+			},
+			"pipelinestatus": {
+				"type": "string"
+			},
+			"RunStart": {
+				"type": "string"
+			},
+			"Duration": {
+				"type": "string"
+			}
+		},
 		"annotations": [],
 		"type": "SqlServerTable",
 		"schema": [],
