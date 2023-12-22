@@ -1,0 +1,9 @@
+{
+	"name": "dfadmin",
+	"location": "eastus",
+	"identity": {
+		"type": "SystemAssigned",
+		"principalId": "a556c787-de5b-46aa-be24-4b6573213c2b",
+		"tenantId": "2db0e13c-89f2-4a67-88ce-504c6fb70607"
+	}
+}
