@@ -60,8 +60,8 @@
 				]
 			},
 			{
-				"name": "Stored procedure1",
-				"type": "SqlServerStoredProcedure",
+				"name": "Lookup",
+				"type": "Lookup",
 				"dependsOn": [
 					{
 						"activity": "Copy data",
@@ -79,45 +79,34 @@
 				},
 				"userProperties": [],
 				"typeProperties": {
-					"storedProcedureName": "[dbo].[sp_auditlog]",
-					"storedProcedureParameters": {
-						"Duration": {
-							"value": {
-								"value": "@activity('Copy data').output.copyDuration",
-								"type": "Expression"
-							},
-							"type": "String"
-						},
-						"pipelinename": {
-							"value": {
+					"source": {
+						"type": "SqlServerSource",
+						"queryTimeout": "02:00:00",
+						"partitionOption": "None"
+					},
+					"dataset": {
+						"referenceName": "DS_AUDITlog_SqlServerTable",
+						"type": "DatasetReference",
+						"parameters": {
+							"PipelineName": {
 								"value": "@pipeline().Pipeline",
 								"type": "Expression"
 							},
-							"type": "String"
-						},
-						"pipelinerunid": {
-							"value": {
+							"pipelinerunid": {
 								"value": "@pipeline().RunId",
 								"type": "Expression"
 							},
-							"type": "String"
-						},
-						"pipelinestatus": {
-							"value": "SUCCESS",
-							"type": "String"
-						},
-						"RunStart": {
-							"value": {
+							"pipelinestatus": "SUCCESS",
+							"RunStart": {
 								"value": "@utcNow()",
 								"type": "Expression"
 							},
-							"type": "DateTime"
+							"Duration": {
+								"value": "@activity('Copy data').output.copyDuration",
+								"type": "Expression"
+							}
 						}
 					}
-				},
-				"linkedServiceName": {
-					"referenceName": "LS_storedlinkedService",
-					"type": "LinkedServiceReference"
 				}
 			},
 			{

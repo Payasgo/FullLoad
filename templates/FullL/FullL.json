@@ -1,0 +1,237 @@
+{
+	"$schema": "http://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+	"contentVersion": "1.0.0.0",
+	"parameters": {
+		"factoryName": {
+			"type": "string",
+			"metadata": "Data Factory name"
+		},
+		"LS_AzureDataLakeStorage": {
+			"type": "string"
+		},
+		"LS_SqlServer": {
+			"type": "string"
+		}
+	},
+	"variables": {
+		"factoryId": "[concat('Microsoft.DataFactory/factories/', parameters('factoryName'))]"
+	},
+	"resources": [
+		{
+			"name": "[concat(parameters('factoryName'), '/FullLoad')]",
+			"type": "Microsoft.DataFactory/factories/pipelines",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"activities": [
+					{
+						"name": "Copy data",
+						"type": "Copy",
+						"dependsOn": [],
+						"policy": {
+							"timeout": "0.12:00:00",
+							"retry": 0,
+							"retryIntervalInSeconds": 30,
+							"secureOutput": false,
+							"secureInput": false
+						},
+						"userProperties": [],
+						"typeProperties": {
+							"source": {
+								"type": "DelimitedTextSource",
+								"storeSettings": {
+									"type": "AzureBlobFSReadSettings",
+									"recursive": true,
+									"enablePartitionDiscovery": false
+								},
+								"formatSettings": {
+									"type": "DelimitedTextReadSettings"
+								}
+							},
+							"sink": {
+								"type": "SqlServerSink",
+								"preCopyScript": "DROP TABLE IF EXISTS dbo.Employeedata",
+								"writeBehavior": "insert",
+								"sqlWriterUseTableLock": false,
+								"tableOption": "autoCreate"
+							},
+							"enableStaging": false,
+							"translator": {
+								"type": "TabularTranslator",
+								"typeConversion": true,
+								"typeConversionSettings": {
+									"allowDataTruncation": true,
+									"treatBooleanAsNumber": false
+								}
+							}
+						},
+						"inputs": [
+							{
+								"referenceName": "DS_SOURCE_DelimitedText",
+								"type": "DatasetReference"
+							}
+						],
+						"outputs": [
+							{
+								"referenceName": "DS_sink_SqlServerTable",
+								"type": "DatasetReference",
+								"parameters": {
+									"TableName": "Employeedata"
+								}
+							}
+						]
+					},
+					{
+						"name": "Lookup",
+						"type": "Lookup",
+						"dependsOn": [
+							{
+								"activity": "Copy data",
+								"dependencyConditions": [
+									"Succeeded"
+								]
+							}
+						],
+						"policy": {
+							"timeout": "0.12:00:00",
+							"retry": 0,
+							"retryIntervalInSeconds": 30,
+							"secureOutput": false,
+							"secureInput": false
+						},
+						"userProperties": [],
+						"typeProperties": {
+							"source": {
+								"type": "SqlServerSource",
+								"queryTimeout": "02:00:00",
+								"partitionOption": "None"
+							},
+							"dataset": {
+								"referenceName": "DS_AUDITlog_SqlServerTable",
+								"type": "DatasetReference",
+								"parameters": {
+									"PipelineName": {
+										"value": "@pipeline().Pipeline",
+										"type": "Expression"
+									},
+									"pipelinerunid": {
+										"value": "@pipeline().RunId",
+										"type": "Expression"
+									},
+									"pipelinestatus": "SUCCESS",
+									"RunStart": {
+										"value": "@utcNow()",
+										"type": "Expression"
+									},
+									"Duration": {
+										"value": "@activity('Copy data').output.copyDuration",
+										"type": "Expression"
+									}
+								}
+							}
+						}
+					}
+				],
+				"variables": {
+					"pipelineName": {
+						"type": "String"
+					}
+				},
+				"annotations": [],
+				"lastPublishTime": "2023-12-22T05:24:39Z"
+			},
+			"dependsOn": [
+				"[concat(variables('factoryId'), '/datasets/DS_SOURCE_DelimitedText')]",
+				"[concat(variables('factoryId'), '/datasets/DS_sink_SqlServerTable')]",
+				"[concat(variables('factoryId'), '/datasets/DS_AUDITlog_SqlServerTable')]"
+			]
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/DS_SOURCE_DelimitedText')]",
+			"type": "Microsoft.DataFactory/factories/datasets",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"linkedServiceName": {
+					"referenceName": "[parameters('LS_AzureDataLakeStorage')]",
+					"type": "LinkedServiceReference"
+				},
+				"annotations": [],
+				"type": "DelimitedText",
+				"typeProperties": {
+					"location": {
+						"type": "AzureBlobFSLocation",
+						"fileName": "Sampleemployeedata.csv",
+						"fileSystem": "input"
+					},
+					"columnDelimiter": ",",
+					"escapeChar": "\\",
+					"firstRowAsHeader": true,
+					"quoteChar": "\""
+				},
+				"schema": []
+			},
+			"dependsOn": []
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/DS_sink_SqlServerTable')]",
+			"type": "Microsoft.DataFactory/factories/datasets",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"linkedServiceName": {
+					"referenceName": "[parameters('LS_SqlServer')]",
+					"type": "LinkedServiceReference"
+				},
+				"parameters": {
+					"TableName": {
+						"type": "string"
+					}
+				},
+				"annotations": [],
+				"type": "SqlServerTable",
+				"schema": [],
+				"typeProperties": {
+					"table": {
+						"value": "@dataset().TableName",
+						"type": "Expression"
+					}
+				}
+			},
+			"dependsOn": []
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/DS_AUDITlog_SqlServerTable')]",
+			"type": "Microsoft.DataFactory/factories/datasets",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"linkedServiceName": {
+					"referenceName": "[parameters('LS_SqlServer')]",
+					"type": "LinkedServiceReference"
+				},
+				"parameters": {
+					"PipelineName": {
+						"type": "string"
+					},
+					"pipelinerunid": {
+						"type": "string"
+					},
+					"pipelinestatus": {
+						"type": "string"
+					},
+					"RunStart": {
+						"type": "string"
+					},
+					"Duration": {
+						"type": "string"
+					}
+				},
+				"annotations": [],
+				"type": "SqlServerTable",
+				"schema": [],
+				"typeProperties": {
+					"schema": "dbo",
+					"table": "auditlog"
+				}
+			},
+			"dependsOn": []
+		}
+	]
+}
